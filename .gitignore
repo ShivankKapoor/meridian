@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# Go binaries
+meridian
+*.exe
+
+# Test output
+*.out
+coverage.html
+
+# Vendor
+vendor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
