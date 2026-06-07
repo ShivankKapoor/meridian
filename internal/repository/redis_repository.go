@@ -15,8 +15,10 @@ type RedisRepository struct {
 
 func NewRedisRepository(addr, password string) (*RedisRepository, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
+		Addr:         addr,
+		Password:     password,
+		ReadTimeout:  500 * time.Millisecond,
+		WriteTimeout: 500 * time.Millisecond,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)

@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"meridian/internal/models"
 	"meridian/internal/repository"
 )
@@ -60,6 +62,11 @@ func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.L
 	if err == nil {
 		slog.Info("cache hit", "ip", ip)
 		return loc, nil
+	}
+
+	if !errors.Is(err, redis.Nil) {
+		slog.Error("redis error", "error", err)
+		go s.discord.NotifyRedisDown(err)
 	}
 
 	slog.Info("cache miss, calling ip-api", "ip", ip)

@@ -81,3 +81,20 @@ func (d *DiscordService) NotifyCacheMiss(ip string) {
 		},
 	})
 }
+
+func (d *DiscordService) NotifyRedisDown(err error) {
+	d.send(discordPayload{
+		Embeds: []discordEmbed{
+			{
+				Title:       "Redis Unreachable",
+				Description: "Failed to connect to Redis — requests will hit ip-api directly until Redis recovers.",
+				Color:       0xE74C3C, // red
+				Fields: []embedField{
+					{Name: "Error", Value: "`" + err.Error() + "`", Inline: false},
+				},
+				Footer:    embedFooter{Text: "Meridian"},
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+			},
+		},
+	})
+}
