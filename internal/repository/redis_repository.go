@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -13,22 +14,24 @@ type RedisRepository struct {
 	rdb *redis.Client
 }
 
-func NewRedisRepository(addr, password string) (*RedisRepository, error) {
+func NewRedisRepository(addr, password string) *RedisRepository {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         addr,
 		Password:     password,
-		ReadTimeout:  500 * time.Millisecond,
-		WriteTimeout: 500 * time.Millisecond,
+		DialTimeout:  1 * time.Second,
+		ReadTimeout:  200 * time.Millisecond,
+		WriteTimeout: 200 * time.Millisecond,
+		MaxRetries:   -1,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, err
+		slog.Warn("Redis unavailable at startup, continuing without cache", "error", err)
 	}
 
-	return &RedisRepository{rdb: rdb}, nil
+	return &RedisRepository{rdb: rdb}
 }
 
 const cacheTTL = 7 * 24 * time.Hour

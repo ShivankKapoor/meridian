@@ -18,11 +18,7 @@ func main() {
 	eVariable := config.Load()
 
 	redisAddr := eVariable.RedisHost + ":" + eVariable.RedisPort
-	redisRepo, err := repository.NewRedisRepository(redisAddr, eVariable.RedisPassword)
-	if err != nil {
-		slog.Error("Failed to connect to Redis", "error", err)
-		os.Exit(1)
-	}
+	redisRepo := repository.NewRedisRepository(redisAddr, eVariable.RedisPassword)
 
 	discordService := service.NewDiscordService(eVariable.DiscordWebHook)
 	locationService := service.NewLocationService(redisRepo, discordService)
