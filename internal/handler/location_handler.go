@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"log/slog"
+	"net"
 	"net/http"
 
 	"meridian/internal/service"
@@ -18,6 +19,11 @@ func NewLocationHandler(locationService *service.LocationService) *LocationHandl
 
 func (h *LocationHandler) GetLocation(w http.ResponseWriter, r *http.Request) {
 	ip := r.PathValue("ip")
+
+	if net.ParseIP(ip) == nil {
+		http.Error(w, "invalid IP address", http.StatusBadRequest)
+		return
+	}
 
 	loc, err := h.locationService.GetLocation(r.Context(), ip)
 	if err != nil {
