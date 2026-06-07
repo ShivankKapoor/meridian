@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -30,7 +31,12 @@ func NewRedisRepository(addr, password string) (*RedisRepository, error) {
 
 const cacheTTL = 7 * 24 * time.Hour
 
+func sanitizeKey(key string) string {
+	return strings.ReplaceAll(key, ":", "-")
+}
+
 func (r *RedisRepository) SetCache(ctx context.Context, key string, value any) error {
+	key = sanitizeKey(key)
 	b, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -39,6 +45,7 @@ func (r *RedisRepository) SetCache(ctx context.Context, key string, value any) e
 }
 
 func (r *RedisRepository) GetCache(ctx context.Context, key string, dest any) error {
+	key = sanitizeKey(key)
 	b, err := r.rdb.Get(ctx, key).Bytes()
 	if err != nil {
 		return err

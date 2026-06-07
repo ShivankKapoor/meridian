@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Port          string
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
+	Port           string
+	RedisHost      string
+	RedisPort      string
+	RedisPassword  string
+	DiscordWebHook string
 }
 
 func Load() *Config {
@@ -20,10 +21,11 @@ func Load() *Config {
 	}
 
 	return &Config{
-		Port:          ":" + getEnv("PORT", "9090"),
-		RedisHost:     getEnv("REDIS_HOST", "localhost"),
-		RedisPort:     getEnv("REDIS_PORT", "6379"),
-		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		Port:           ":" + getEnv("PORT", "9090"),
+		RedisHost:      getEnv("REDIS_HOST", "localhost"),
+		RedisPort:      getEnv("REDIS_PORT", "6379"),
+		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
+		DiscordWebHook: getEnv("DISCORD_WEBHOOK", ""),
 	}
 }
 

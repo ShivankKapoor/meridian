@@ -6,32 +6,51 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"meridian/internal/models"
 	"meridian/internal/repository"
 )
 
+var ipAPIClient = &http.Client{Timeout: 30 * time.Second}
+
 type LocationService struct {
-	repo *repository.RedisRepository
+	repo    *repository.RedisRepository
+	discord *DiscordService
 }
 
-func NewLocationService(repo *repository.RedisRepository) *LocationService {
-	return &LocationService{repo: repo}
+func NewLocationService(repo *repository.RedisRepository, discord *DiscordService) *LocationService {
+	return &LocationService{repo: repo, discord: discord}
 }
 
-func getLocationViaIPAPI(ip string) (*models.Location, error) {
-	resp, err := http.Get(fmt.Sprintf("http://ip-api.com/json/%s", ip))
+type ipAPIResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	models.Location
+}
+
+func getLocationViaIPAPI(ctx context.Context, ip string) (*models.Location, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://ip-api.com/json/%s", ip), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := ipAPIClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var loc models.Location
-	if err := json.NewDecoder(resp.Body).Decode(&loc); err != nil {
+	var result ipAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
 
-	return &loc, nil
+	if result.Status != "success" {
+		return nil, fmt.Errorf("ip-api: %s", result.Message)
+	}
+
+	return &result.Location, nil
 }
 
 func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.Location, error) {
@@ -44,7 +63,8 @@ func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.L
 	}
 
 	slog.Info("cache miss, calling ip-api", "ip", ip)
-	loc, err = getLocationViaIPAPI(ip)
+	go s.discord.NotifyCacheMiss(ip)
+	loc, err = getLocationViaIPAPI(ctx, ip)
 	if err != nil {
 		slog.Error("failed to fetch location from ip-api", "ip", ip, "error", err)
 		return nil, err
