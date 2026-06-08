@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -55,8 +56,37 @@ func getLocationViaIPAPI(ctx context.Context, ip string) (*models.Location, erro
 	return &result.Location, nil
 }
 
+var ErrPrivateIP = errors.New("ip is a private/reserved address")
+
+var privateRanges = []string{
+	"10.0.0.0/8",
+	"172.16.0.0/12",
+	"192.168.0.0/16",
+	"127.0.0.0/8",
+	"::1/128",
+	"fc00::/7",
+}
+
+func isPrivateIP(ip string) bool {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return false
+	}
+	for _, cidr := range privateRanges {
+		_, network, _ := net.ParseCIDR(cidr)
+		if network.Contains(parsed) {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.Location, error) {
 	slog.Info("fetching location", "ip", ip)
+
+	if isPrivateIP(ip) {
+		return nil, ErrPrivateIP
+	}
 
 	loc, err := s.getLocationViaRedis(ctx, ip)
 	if err == nil {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -27,6 +28,10 @@ func (h *LocationHandler) GetLocation(w http.ResponseWriter, r *http.Request) {
 
 	loc, err := h.locationService.GetLocation(r.Context(), ip)
 	if err != nil {
+		if errors.Is(err, service.ErrPrivateIP) {
+			http.Error(w, "location unavailable for private/reserved IP addresses", http.StatusBadRequest)
+			return
+		}
 		slog.Error("failed to get location", "ip", ip, "error", err)
 		http.Error(w, "failed to get location", http.StatusInternalServerError)
 		return
