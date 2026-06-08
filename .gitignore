@@ -1,6 +1,9 @@
 # Environment
 .env
 
+# Logs
+logs/
+
 # Go binaries
 meridian
 *.exe
