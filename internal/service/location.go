@@ -85,6 +85,7 @@ func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.L
 	slog.Info("fetching location", "ip", ip)
 
 	if isPrivateIP(ip) {
+		slog.Warn("location requested for private/reserved IP", "ip", ip)
 		return nil, ErrPrivateIP
 	}
 
