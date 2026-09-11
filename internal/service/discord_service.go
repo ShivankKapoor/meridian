@@ -98,3 +98,20 @@ func (d *DiscordService) NotifyRedisDown(err error) {
 		},
 	})
 }
+
+func (d *DiscordService) NotifyDBDown(err error) {
+	d.send(discordPayload{
+		Embeds: []discordEmbed{
+			{
+				Title:       "MariaDB Unreachable",
+				Description: "Failed to write lookup log to MariaDB — requests will continue to be served without logging until it recovers.",
+				Color:       0xE74C3C, // red
+				Fields: []embedField{
+					{Name: "Error", Value: "`" + err.Error() + "`", Inline: false},
+				},
+				Footer:    embedFooter{Text: "Meridian"},
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+			},
+		},
+	})
+}

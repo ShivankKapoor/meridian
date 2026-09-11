@@ -13,6 +13,11 @@ type Config struct {
 	RedisPort      string
 	RedisPassword  string
 	DiscordWebHook string
+	DBHost         string
+	DBPort         string
+	DBUser         string
+	DBPassword     string
+	DBName         string
 }
 
 func Load() *Config {
@@ -26,6 +31,11 @@ func Load() *Config {
 		RedisPort:      getEnv("REDIS_PORT", "6379"),
 		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
 		DiscordWebHook: getEnv("DISCORD_WEBHOOK", ""),
+		DBHost:         getEnv("DB_HOST", "localhost"),
+		DBPort:         getEnv("DB_PORT", "3306"),
+		DBUser:         getEnv("DB_USER", ""),
+		DBPassword:     getEnv("DB_PASSWORD", ""),
+		DBName:         getEnv("DB_NAME", "meridian"),
 	}
 }
 

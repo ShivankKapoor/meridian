@@ -20,8 +20,10 @@ func main() {
 	redisAddr := eVariable.RedisHost + ":" + eVariable.RedisPort
 	redisRepo := repository.NewRedisRepository(redisAddr, eVariable.RedisPassword)
 
+	mariaDBRepo := repository.NewMariaDBRepository(eVariable.DBHost, eVariable.DBPort, eVariable.DBUser, eVariable.DBPassword, eVariable.DBName)
+
 	discordService := service.NewDiscordService(eVariable.DiscordWebHook)
-	locationService := service.NewLocationService(redisRepo, discordService)
+	locationService := service.NewLocationService(redisRepo, mariaDBRepo, discordService)
 	locationHandler := handler.NewLocationHandler(locationService)
 
 	homeHandler := handler.NewHomeHandler()
