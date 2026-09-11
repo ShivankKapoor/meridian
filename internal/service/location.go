@@ -19,11 +19,19 @@ var ipAPIClient = &http.Client{Timeout: 30 * time.Second}
 
 type LocationService struct {
 	repo    *repository.RedisRepository
+	logRepo *repository.MariaDBRepository
 	discord *DiscordService
 }
 
-func NewLocationService(repo *repository.RedisRepository, discord *DiscordService) *LocationService {
-	return &LocationService{repo: repo, discord: discord}
+func NewLocationService(repo *repository.RedisRepository, logRepo *repository.MariaDBRepository, discord *DiscordService) *LocationService {
+	return &LocationService{repo: repo, logRepo: logRepo, discord: discord}
+}
+
+func (s *LocationService) logLookup(ip, status string, durationMs *int, loc *models.Location) {
+	if err := s.logRepo.LogLookup(context.Background(), ip, status, durationMs, loc); err != nil {
+		slog.Error("failed to write lookup log", "ip", ip, "error", err)
+		s.discord.NotifyDBDown(err)
+	}
 }
 
 type ipAPIResponse struct {
@@ -86,12 +94,14 @@ func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.L
 
 	if isPrivateIP(ip) {
 		slog.Warn("location requested for private/reserved IP", "ip", ip)
+		go s.logLookup(ip, "private_ip", nil, nil)
 		return nil, ErrPrivateIP
 	}
 
 	loc, err := s.getLocationViaRedis(ctx, ip)
 	if err == nil {
 		slog.Info("cache hit", "ip", ip)
+		go s.logLookup(ip, "cache_hit", nil, loc)
 		return loc, nil
 	}
 
@@ -102,11 +112,17 @@ func (s *LocationService) GetLocation(ctx context.Context, ip string) (*models.L
 
 	slog.Info("cache miss, calling ip-api", "ip", ip)
 	go s.discord.NotifyCacheMiss(ip)
+	start := time.Now()
 	loc, err = getLocationViaIPAPI(ctx, ip)
+	durationMs := int(time.Since(start).Milliseconds())
+
 	if err != nil {
 		slog.Error("failed to fetch location from ip-api", "ip", ip, "error", err)
+		go s.logLookup(ip, "cache_miss", &durationMs, nil)
 		return nil, err
 	}
+
+	go s.logLookup(ip, "cache_miss", &durationMs, loc)
 
 	go func() {
 		slog.Info("storing location in redis", "ip", ip)

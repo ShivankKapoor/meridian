@@ -7,16 +7,24 @@ A fast IP geolocation API written in Go. Looks up location data for a given IP a
 - IP geolocation via ip-api.com
 - Redis caching with a 7-day TTL
 - IPv4 and IPv6 support
-- Discord webhook alerts on cache misses and Redis outages
+- Discord webhook alerts on cache misses, Redis outages, and MariaDB outages
+- Lookup logging to MariaDB (IP, timestamp, cache hit/miss, ip-api latency, resolved location)
 - Graceful shutdown on SIGTERM/SIGINT
 
 ## Requirements
 
 - [Podman](https://podman.io/)
 - Redis instance
+- MariaDB instance
 - Discord webhook URL (optional)
 
 ## Setup
+
+Apply `schema.sql` against your MariaDB instance:
+
+```bash
+mysql -h <host> -u <user> -p <db_name> < schema.sql
+```
 
 Copy `example.env` to `.env` and fill in your values:
 
@@ -26,6 +34,11 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
 DISCORD_WEBHOOK=
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=
+DB_PASSWORD=
+DB_NAME=meridian
 ```
 
 ## Running
