@@ -8,3 +8,8 @@ services:
       - "9090:9090"
     volumes:
       - ./.env:/app/.env:z
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "10"
