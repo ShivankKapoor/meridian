@@ -1,0 +1,10 @@
+services:
+  meridian:
+    build: .
+    image: meridian
+    container_name: Meridian
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./.env:/app/.env:z

@@ -13,7 +13,7 @@ A fast IP geolocation API written in Go. Looks up location data for a given IP a
 
 ## Requirements
 
-- [Podman](https://podman.io/)
+- [Docker](https://www.docker.com/) with Compose
 - Redis instance
 - MariaDB instance
 - Discord webhook URL (optional)
@@ -44,13 +44,13 @@ DB_NAME=meridian
 ## Running
 
 ```bash
-./run.sh
+docker compose up -d --build
 ```
 
-Builds the image, starts the container, and writes logs to `logs/meridian_<timestamp>.log`.
+Builds the image and starts the container, which restarts automatically unless stopped. View logs with `docker compose logs -f`.
 
 ```bash
-./stop.sh
+docker compose down --rmi local
 ```
 
 Stops the container and removes the image.
